@@ -1,21 +1,19 @@
-cd ~/security/
+# Assuming the use of pyenv. First update it to see th elatest list
+cd ~/.pyenv; git pull; cd -
+pyenv install 3.10.14
+pyenv local 3.10.14
+python --version
+
+git clone 
+cd security
+python -m venv .security
 source .security/bin/activate
+
+pip install pip --upgrade
 
 pip install wheel
 
-cat << "EOF" > requirements.txt
-# pip install -r requirements.txt
-jupyterlab
-numpy
-matplotlib
-# https://cryptography.io/en/latest/
-cryptography
-# apt install libmpfr-dev libmpc-dev libgmp-dev python3-gmpy2
-gmpy2
-EOF
-
 pip install -r requirements.txt
-
 
 jupyter lab --generate-config
 vi ~/.jupyter/jupyter_lab_config.py

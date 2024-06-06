@@ -1,9 +1,14 @@
 # pip install -r requirements.txt
+
+wheel
 jupyterlab
 numpy
 matplotlib
+
 # https://cryptography.io/en/latest/
 cryptography
+
+# May need to install for gmpy
 # apt install libmpfr-dev libmpc-dev libgmp-dev python3-gmpy2
 gmpy
 pillow
