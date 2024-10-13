@@ -1,0 +1,13 @@
+# Setup env (assume Python 3.12.7) with:
+#
+# python -m venv .matter_tools_venv
+# ./.matter_tools_venv/bin/activate
+# pip install -r requirements.txt
+#
+# Deactivate with: deactivate
+
+jupyterlab
+ipykernel
+scapy
+numpy
+wheel
