@@ -1,0 +1,93 @@
+diff --git a/packages/matter-node.js-examples/src/examples/DeviceNode.ts b/packages/matter-node.js-examples/src/examples/DeviceNode.ts
+index f03da258..29f72e7e 100644
+--- a/packages/matter-node.js-examples/src/examples/DeviceNode.ts
++++ b/packages/matter-node.js-examples/src/examples/DeviceNode.ts
+@@ -136,7 +136,12 @@ main().catch(error => console.error(error));
+ /** Defined a shell command from an environment variable and execute it and log the response. */
+ function executeCommand(scriptParamName: string) {
+     const script = Environment.default.vars.string(scriptParamName);
+-    if (script === undefined) return undefined;
++    if (script === undefined)
++    {
++        console.log(`${scriptParamName}: Nothing defined.`);
++        return undefined;
++    }
++
+     console.log(`${scriptParamName}: ${execSync(script).toString().slice(0, -1)}`);
+ }
+
+diff --git a/packages/matter.js/src/crypto/Crypto.ts b/packages/matter.js/src/crypto/Crypto.ts
+index bea99678..a7526545 100644
+--- a/packages/matter.js/src/crypto/Crypto.ts
++++ b/packages/matter.js/src/crypto/Crypto.ts
+@@ -11,6 +11,9 @@ import { MatterError, NoProviderError } from "../common/MatterError.js";
+ import { ByteArray, Endian } from "../util/ByteArray.js";
+ import { DataReader } from "../util/DataReader.js";
+ import { PrivateKey } from "./Key.js";
++import { Logger } from "../log/Logger.js";
++
++const logger = Logger.get("Crypto");
+
+ export const ec = {
+     p256,
+@@ -35,12 +38,36 @@ export abstract class Crypto {
+     };
+
+     abstract encrypt(key: ByteArray, data: ByteArray, nonce: ByteArray, aad?: ByteArray): ByteArray;
+-    static readonly encrypt = (key: ByteArray, data: ByteArray, nonce: ByteArray, aad?: ByteArray): ByteArray =>
+-        Crypto.get().encrypt(key, data, nonce, aad);
++
++    static readonly encrypt = (key: ByteArray, data: ByteArray, nonce: ByteArray, aad?: ByteArray): ByteArray => {
++        const result = Crypto.get().encrypt(key, data, nonce, aad);
++
++        // Convert key, nonce, and aad to hex strings
++        const keyString = key.toHex();
++        const nonceString = nonce.toHex();
++        const aadString = aad?.toHex();
++
++        // Log the converted values
++        logger.debug(`CRYPTOGRAPHIC_KEY_MATERIAL Key: ${keyString}, Nonce: ${nonceString}, AAD: ${aadString}`);
++
++        return result;
++    };
+
+     abstract decrypt(key: ByteArray, data: ByteArray, nonce: ByteArray, aad?: ByteArray): ByteArray;
+-    static readonly decrypt = (key: ByteArray, data: ByteArray, nonce: ByteArray, aad?: ByteArray): ByteArray =>
+-        Crypto.get().decrypt(key, data, nonce, aad);
++
++    static readonly decrypt = (key: ByteArray, data: ByteArray, nonce: ByteArray, aad?: ByteArray): ByteArray => {
++        const result = Crypto.get().decrypt(key, data, nonce, aad);
++
++        // Convert key, nonce, and aad to hex strings
++        const keyString = key.toHex();
++        const nonceString = nonce.toHex();
++        const aadString = aad?.toHex();
++
++        // Log the converted values
++        logger.debug(`CRYPTOGRAPHIC_KEY_MATERIAL Key: ${keyString}, Nonce: ${nonceString}, AAD: ${aadString}`);
++
++        return result;
++    };
+
+     abstract getRandomData(length: number): ByteArray;
+     static readonly getRandomData = (length: number): ByteArray => Crypto.get().getRandomData(length);
+diff --git a/packages/matter.js/src/session/SecureSession.ts b/packages/matter.js/src/session/SecureSession.ts
+index ead005e1..736d27da 100644
+--- a/packages/matter.js/src/session/SecureSession.ts
++++ b/packages/matter.js/src/session/SecureSession.ts
+@@ -86,6 +86,15 @@ export class SecureSession<T> extends Session<T> {
+         const decryptKey = isInitiator ? keys.slice(16, 32) : keys.slice(0, 16);
+         const encryptKey = isInitiator ? keys.slice(0, 16) : keys.slice(16, 32);
+         const attestationKey = keys.slice(32, 48);
++        // Convert peerNodeId to a 64 bit hex string with zero padding to the left
++        const peerNodeIdString = peerNodeId.toString(16).padStart(16, "0");
++
++        // Convert fabric?.fabricId to a 64 bit hex string with zero padding to the left
++        const fabricIdString = fabric?.fabricId?.toString(16).padStart(16, "0");
++        logger.debug(`CRYPTOGRAPHIC_KEY_MATERIAL Session keys for ${isResumption ? "resumption" : "establishment"}: decryptKey=${decryptKey.toHex()}, encryptKey=${encryptKey.toHex()}, attestationKey=${attestationKey.toHex()}, peerNodeId=${peerNodeIdString}, peerSessionId=${peerSessionId.toString()}, context=${context}, id=${id.toString()}, fabric=${fabricIdString}`, );
++
++
++
+         return new SecureSession({
+             context,
+             id,
